@@ -109,8 +109,37 @@
                 if (!element) return;
 
                 element.addEventListener('input', (e) => {
+                    const target = e.target;
+                    const val = target.value;
+                    const cursorPosition = target.selectionStart;
+
+                    // Extract characters immediately preceding the active text cursor
+                    const textBeforeCursor = val.slice(0, cursorPosition);
+
+                    let matchLength = 0;
+
+                    // 1. Detect standard left-hand or raw right-hand double triggers (Length: 2)
+                    if (textBeforeCursor.endsWith(',,') || textBeforeCursor.endsWith('..')) {
+                        matchLength = 2;
+                    }
+                    // 2. Catch Android's automatic software keyboard ellipsis conversion (Length: 1)
+                    else if (textBeforeCursor.endsWith('…')) {
+                        matchLength = 1;
+                    }
+
+                    // If a macro match was hit, swap it for our clean divider string
+                    if (matchLength > 0) {
+                        const expandedText = val.slice(0, cursorPosition - matchLength) + ' # ' + val.slice(cursorPosition);
+                        target.value = expandedText;
+
+                        // Dynamically calculate cursor position based on what type of token was swallowed
+                        const newCursorPos = cursorPosition - matchLength + 3; // removes old token, appends 3 chars (" # ")
+                        target.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+
+                    // Store modified value into persistent preferences
                     if (window.AndroidWidgetBridge) {
-                        window.AndroidWidgetBridge.saveDayText(k, e.target.value);
+                        window.AndroidWidgetBridge.saveDayText(k, target.value);
                     }
                 });
 
