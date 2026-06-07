@@ -1,37 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Widget Config Panel</title>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
-  <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
-  <style>
-    :root { --ion-font-family: sans-serif; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scratchpad Config</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
+    <style>
+        :root {
+            --ion-font-family: sans-serif;
+        }
+
+        /* Style our native textareas to match Ionic beautifully */
+        .scratch-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 16px;
+            padding: 12px 0;
+            resize: none;
+            font-family: inherit;
+            color: #000000;
+        }
+    </style>
 </head>
+
 <body>
-  <ion-app>
-    <ion-header>
-      <ion-toolbar color="dark">
-        <ion-title>Widget Controller</title>
-      </ion-toolbar>
-    </ion-header>
+    <ion-app>
+        <ion-header>
+            <ion-toolbar color="dark">
+                <ion-title>Frictionless Reminders</ion-title>
+            </ion-toolbar>
+        </ion-header>
 
-    <ion-content class="ion-padding">
-      <h2>Vanilla JS Setup</h2>
-      <p>This UI acts as your main app workspace or configuration panel.</p>
-      <ion-button id="action-btn" expand="block" color="primary">Test Action</ion-button>
-    </ion-content>
-  </ion-app>
+        <ion-content class="ion-padding" color="light">
+            <ion-list lines="inset">
+                <ion-item-group>
+                    <ion-item-divider><ion-label color="primary">YESTERDAY</ion-label></ion-divider>
+                        <ion-item>
+                            <textarea id="input-yesterday" class="scratch-input" placeholder="get mlk..." rows="2"
+                                enterkeyhint="done"></textarea>
+                        </ion-item>
+                </ion-item-group>
 
-  <script>
-    // Standard Vanilla JS DOM interactions
-    document.getElementById('action-btn').addEventListener('click', () => {
-      console.log('Button clicked in vanilla app context.');
-      alert('Hello from the vanilla JS layer!');
-    });
-  </script>
+                <ion-item-group style="margin-top: 15px;">
+                    <ion-item-divider><ion-label color="success">TODAY</ion-label></ion-divider>
+                        <ion-item>
+                            <textarea id="input-today" class="scratch-input" placeholder="fix compilation..." rows="2"
+                                enterkeyhint="done"></textarea>
+                        </ion-item>
+                </ion-item-group>
+
+                <ion-item-group style="margin-top: 15px;">
+                    <ion-item-divider><ion-label color="warning">TOMORROW</ion-label></ion-divider>
+                        <ion-item>
+                            <textarea id="input-tomorrow" class="scratch-input" placeholder="rest..." rows="2"
+                                enterkeyhint="done"></textarea>
+                        </ion-item>
+                </ion-item-group>
+            </ion-list>
+        </ion-content>
+    </ion-app>
+
+    <script>
+        const days = ['yesterday', 'today', 'tomorrow'];
+
+        function loadInitialData() {
+            if (window.AndroidWidgetBridge) {
+                days.forEach(day => {
+                    const storedText = window.AndroidWidgetBridge.getDayText(day);
+                    document.getElementById(`input-${day}`).value = storedText;
+                });
+            }
+        }
+
+        function setupRealtimeAutosave() {
+            days.forEach(day => {
+                const element = document.getElementById(`input-${day}`);
+
+                // Save automatically on every single character change
+                element.addEventListener('input', (e) => {
+                    if (window.AndroidWidgetBridge) {
+                        window.AndroidWidgetBridge.saveDayText(day, e.target.value);
+                    }
+                });
+
+                // Native elements will now reliably catch this keypress event
+                element.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.keyCode === 13) {
+                        e.preventDefault(); // Stop the box from expanding with a newline
+
+                        if (window.AndroidWidgetBridge) {
+                            window.AndroidWidgetBridge.saveDayText(day, e.target.value);
+                            window.AndroidWidgetBridge.goHome(); // Collapse app immediately
+                        }
+                    }
+                });
+            });
+        }
+
+        window.checkWidgetTrigger = function () {
+            if (window.AndroidWidgetBridge) {
+                const targetedDay = window.AndroidWidgetBridge.getPendingDay();
+                if (targetedDay) {
+                    const inputField = document.getElementById(`input-${targetedDay}`);
+                    if (inputField) {
+                        setTimeout(() => {
+                            inputField.focus(); // Native elements use focus(), not setFocus()
+                        }, 300);
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadInitialData();
+            setupRealtimeAutosave();
+            setTimeout(window.checkWidgetTrigger, 500);
+        });
+    </script>
 </body>
+
 </html>
