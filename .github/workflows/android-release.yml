@@ -3,7 +3,7 @@ name: Build Production Android Bundle
 on:
   push:
     tags:
-      - 'v*' # Fires automatically when you push a version tag like v1.0.2
+      - 'v*' # Fires automatically when you push a version tag like v1.0.4
 
 jobs:
   build-and-sign:
@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '21' # Bumped to 21 to align with core framework compilation targets
+          java-version: '21'
           cache: 'gradle'
 
       - name: Install Web Dependencies & Build Assets
@@ -44,9 +44,9 @@ jobs:
         id: sign_app
         uses: r0adkll/sign-android-release@v1
         with:
-          bundleReleaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          releaseDirectory: android/app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
