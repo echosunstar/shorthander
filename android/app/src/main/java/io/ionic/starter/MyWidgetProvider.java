@@ -89,22 +89,28 @@ public class MyWidgetProvider extends AppWidgetProvider {
         onUpdate(context, appWidgetManager, new int[]{appWidgetId});
     }
 
+
+    // Locate the onReceive method inside your MyWidgetProvider.java and update its condition blocks:
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
         String action = intent.getAction();
 
-        if (ACTION_PREV.equals(action) || ACTION_NEXT.equals(action) || ACTION_RESET.equals(action)) {
+        // Catch manual widget clicks OR system midnight date changes/manual clock adjustments
+        if (ACTION_PREV.equals(action) || ACTION_NEXT.equals(action) || ACTION_RESET.equals(action) ||
+            Intent.ACTION_DATE_CHANGED.equals(action) || Intent.ACTION_TIMEZONE_CHANGED.equals(action) || Intent.ACTION_TIME_CHANGED.equals(action)) {
+            
             SharedPreferences prefs = context.getSharedPreferences("ScratchPadPrefs", Context.MODE_PRIVATE);
             int offset = prefs.getInt("widget_offset", 0);
 
             if (ACTION_RESET.equals(action)) {
                 offset = 0;
             } else if (ACTION_PREV.equals(action)) {
-                if (offset > -4) offset--; // Allow scrolling further back now that views span wider range
+                if (offset > -4) offset--;
             } else if (ACTION_NEXT.equals(action)) {
                 if (offset < 4) offset++;
             }
+            // System date rollover actions pass through silently, maintaining the relative date mapping anchors
 
             prefs.edit().putInt("widget_offset", offset).apply();
 

@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
+import android.view.inputmethod.InputMethodManager;
 
 public class MainActivity extends BridgeActivity {
     private String pendingDay = "";
@@ -52,6 +53,20 @@ public class MainActivity extends BridgeActivity {
             String day = pendingDay;
             pendingDay = ""; // Consume string token immediately
             return day;
+        }
+
+        @JavascriptInterface
+        public void forceSystemKeyboard() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        // SHOW_FORCED bypasses all WebView user-gesture validation architectures completely
+                        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                    }
+                }
+            });
         }
 
         @JavascriptInterface

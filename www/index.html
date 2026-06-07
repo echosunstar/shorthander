@@ -108,6 +108,7 @@
                                 <div>• TAP_WIDGET &nbsp;→ OPEN_EDITOR</div>
                                 <div>• ENTER_KEY &nbsp;→ SAVE_AND_EXIT</div>
                                 <div style="margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 8px;">• ,, OR .. &nbsp;→ INLINE_DIVIDER ( # )</div>
+                                <div>• FFF &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ CARRY_FORWARD_YEST</div>
                                 <div>• XXX &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ WIP_HISTORY (BLANK)</div>
                                 <div>• NNN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ UNDO_LAST_WIPE</div>
                                 <div>• VVV &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ ABORT_SESSION (ESC)</div>
@@ -145,7 +146,7 @@
 
             const macroFooterHTML = `
                 <div class="telegraph-footer">
-                    ,,/.. = # &nbsp;|&nbsp; xxx = clear &nbsp;|&nbsp; nnn = undo &nbsp;|&nbsp; vvv = esc
+                    ,,/.. = # &nbsp;|&nbsp; fff = forward &nbsp;|&nbsp; xxx = clear &nbsp;|&nbsp; nnn = undo &nbsp;|&nbsp; vvv = esc
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', macroFooterHTML);
@@ -164,6 +165,34 @@
                     const cursorPosition = target.selectionStart;
                     const textBeforeCursor = val.slice(0, cursorPosition);
                     const lowerTextBefore = textBeforeCursor.toLowerCase();
+
+                    if (lowerTextBefore.endsWith('fff')) {
+                        const currentParts = k.split('-');
+                        const currentDateObj = new Date(currentParts[0], currentParts[1] - 1, currentParts[2]);
+                        currentDateObj.setDate(currentDateObj.getDate() - 1);
+                        const yestKey = getDateString(currentDateObj);
+
+                        let yestText = window.AndroidWidgetBridge ? window.AndroidWidgetBridge.getDayText(yestKey) : '';
+                        yestText = yestText.trim();
+
+                        if (yestText.length > 0) {
+                            const baseText = val.slice(0, cursorPosition - 3);
+                            const trailingText = val.slice(cursorPosition);
+                            const separator = (baseText.trim().length > 0 && !baseText.endsWith(' ')) ? ' # ' : (baseText.trim().length > 0 ? '# ' : '');
+                            
+                            target.value = baseText + separator + yestText + trailingText;
+                            const newCursorPos = baseText.length + separator.length + yestText.length;
+                            target.setSelectionRange(newCursorPos, newCursorPos);
+                        } else {
+                            target.value = val.slice(0, cursorPosition - 3) + val.slice(cursorPosition);
+                            target.setSelectionRange(cursorPosition - 3, cursorPosition - 3);
+                        }
+
+                        if (window.AndroidWidgetBridge) {
+                            window.AndroidWidgetBridge.saveDayText(k, target.value);
+                        }
+                        return;
+                    }
 
                     if (lowerTextBefore.endsWith('vvv')) {
                         const originalValue = initialValues[k] || '';
@@ -231,11 +260,20 @@
                 });
             });
 
+            // --- THE UNBREAKABLE NATIVE-BACKED KEYBOARD TRIGGER ---
             if (focusedKey) {
                 const targetInput = document.getElementById(`input-${focusedKey}`);
                 if (targetInput) {
                     setTimeout(() => { 
+                        // 1. Assert DOM layout focus coordinates
                         targetInput.focus(); 
+                        
+                        // 2. Overrule WebView validation check rules by signaling the Linux IME layer directly
+                        if (window.AndroidWidgetBridge && typeof window.AndroidWidgetBridge.forceSystemKeyboard === 'function') {
+                            window.AndroidWidgetBridge.forceSystemKeyboard();
+                        }
+                        
+                        // 3. Apply ergonomic padding space logic
                         let currentVal = targetInput.value;
                         if (currentVal.length > 0 && !currentVal.endsWith(' ')) {
                             targetInput.value = currentVal + ' ';
@@ -243,9 +281,11 @@
                                 window.AndroidWidgetBridge.saveDayText(focusedKey, targetInput.value);
                             }
                         }
+                        
+                        // 4. Lock selection focus directly to the rear character boundary
                         const textEndIndex = targetInput.value.length;
                         targetInput.setSelectionRange(textEndIndex, textEndIndex);
-                    }, 300);
+                    }, 300); 
                 }
             }
         }
