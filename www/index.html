@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scratchpad Config</title>
+    <title>Dynamic Scratchpad</title>
     <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
     <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css" />
@@ -13,7 +13,6 @@
             --ion-font-family: sans-serif;
         }
 
-        /* Style our native textareas to match Ionic beautifully */
         .scratch-input {
             width: 100%;
             border: none;
@@ -35,91 +34,110 @@
                 <ion-title>Frictionless Reminders</ion-title>
             </ion-toolbar>
         </ion-header>
-
         <ion-content class="ion-padding" color="light">
-            <ion-list lines="inset">
-                <ion-item-group>
-                    <ion-item-divider><ion-label color="primary">YESTERDAY</ion-label></ion-divider>
-                        <ion-item>
-                            <textarea id="input-yesterday" class="scratch-input" placeholder="get mlk..." rows="2"
-                                enterkeyhint="done"></textarea>
-                        </ion-item>
-                </ion-item-group>
-
-                <ion-item-group style="margin-top: 15px;">
-                    <ion-item-divider><ion-label color="success">TODAY</ion-label></ion-divider>
-                        <ion-item>
-                            <textarea id="input-today" class="scratch-input" placeholder="fix compilation..." rows="2"
-                                enterkeyhint="done"></textarea>
-                        </ion-item>
-                </ion-item-group>
-
-                <ion-item-group style="margin-top: 15px;">
-                    <ion-item-divider><ion-label color="warning">TOMORROW</ion-label></ion-divider>
-                        <ion-item>
-                            <textarea id="input-tomorrow" class="scratch-input" placeholder="rest..." rows="2"
-                                enterkeyhint="done"></textarea>
-                        </ion-item>
-                </ion-item-group>
+            <ion-list lines="inset" id="dynamic-list-container">
             </ion-list>
         </ion-content>
     </ion-app>
 
     <script>
-        const days = ['yesterday', 'today', 'tomorrow'];
+        let activeKeys = [];
+        let focusedKey = null;
 
-        function loadInitialData() {
-            if (window.AndroidWidgetBridge) {
-                days.forEach(day => {
-                    const storedText = window.AndroidWidgetBridge.getDayText(day);
-                    document.getElementById(`input-${day}`).value = storedText;
-                });
-            }
+        // Helper formatting methods
+        function getDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
         }
 
-        function setupRealtimeAutosave() {
-            days.forEach(day => {
-                const element = document.getElementById(`input-${day}`);
+        function getConciseLabel(date) {
+            const d = date.getDate();
+            const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+            return `${d}-${months[date.getMonth()]}-${String(date.getFullYear()).slice(-2)}`;
+        }
 
-                // Save automatically on every single character change
+        function initializeDateTrack() {
+            let anchorDate = new Date(); // Default anchor point is right now
+
+            if (window.AndroidWidgetBridge) {
+                const targetedDay = window.AndroidWidgetBridge.getPendingDay();
+                if (targetedDay && targetedDay.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    // Parse specific tapped date string payload (YYYY-MM-DD)
+                    const parts = targetedDay.split('-');
+                    anchorDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    focusedKey = targetedDay;
+                }
+            }
+
+            // Build out 3 days flanking our current focus point
+            activeKeys = [];
+            const container = document.getElementById('dynamic-list-container');
+            container.innerHTML = '';
+
+            const labelColors = ['primary', 'success', 'warning'];
+
+            for (let i = -1; i <= 1; i++) {
+                const workingDate = new Date(anchorDate);
+                workingDate.setDate(anchorDate.getDate() + i);
+
+                const k = getDateString(workingDate);
+                const labelText = getConciseLabel(workingDate).toUpperCase();
+                activeKeys.push(k);
+
+                const currentSavedVal = window.AndroidWidgetBridge ? window.AndroidWidgetBridge.getDayText(k) : '';
+
+                // Generate structural DOM canvas node block string
+                const rowHTML = `
+          <ion-item-group style="margin-top: ${i === -1 ? '0' : '15'}px;">
+            <ion-item-divider><ion-label color="${labelColors[i + 1]}">${labelText}</ion-label></ion-divider>
+            <ion-item>
+              <textarea id="input-${k}" class="scratch-input" placeholder="..." rows="2" enterkeyhint="done">${currentSavedVal}</textarea>
+            </ion-item>
+          </ion-item-group>
+        `;
+                container.insertAdjacentHTML('beforeend', rowHTML);
+            }
+
+            bindInputListeners();
+        }
+
+        function bindInputListeners() {
+            activeKeys.forEach(k => {
+                const element = document.getElementById(`input-${k}`);
+                if (!element) return;
+
                 element.addEventListener('input', (e) => {
                     if (window.AndroidWidgetBridge) {
-                        window.AndroidWidgetBridge.saveDayText(day, e.target.value);
+                        window.AndroidWidgetBridge.saveDayText(k, e.target.value);
                     }
                 });
 
-                // Native elements will now reliably catch this keypress event
                 element.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.keyCode === 13) {
-                        e.preventDefault(); // Stop the box from expanding with a newline
-
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
                         if (window.AndroidWidgetBridge) {
-                            window.AndroidWidgetBridge.saveDayText(day, e.target.value);
-                            window.AndroidWidgetBridge.goHome(); // Collapse app immediately
+                            window.AndroidWidgetBridge.saveDayText(k, e.target.value);
+                            window.AndroidWidgetBridge.goHome();
                         }
                     }
                 });
             });
-        }
 
-        window.checkWidgetTrigger = function () {
-            if (window.AndroidWidgetBridge) {
-                const targetedDay = window.AndroidWidgetBridge.getPendingDay();
-                if (targetedDay) {
-                    const inputField = document.getElementById(`input-${targetedDay}`);
-                    if (inputField) {
-                        setTimeout(() => {
-                            inputField.focus(); // Native elements use focus(), not setFocus()
-                        }, 300);
-                    }
+            // Instantly pop open keyboard focus target onto the cell tapped by the user
+            if (focusedKey) {
+                const targetInput = document.getElementById(`input-${focusedKey}`);
+                if (targetInput) {
+                    setTimeout(() => { targetInput.focus(); }, 300);
                 }
             }
         }
 
+        window.checkWidgetTrigger = initializeDateTrack;
+
         window.addEventListener('DOMContentLoaded', () => {
-            loadInitialData();
-            setupRealtimeAutosave();
-            setTimeout(window.checkWidgetTrigger, 500);
+            initializeDateTrack();
         });
     </script>
 </body>

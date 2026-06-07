@@ -3,90 +3,141 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#1e1e2e"
-    android:weightSum="3">
+    android:background="#1e1e2e">
 
     <LinearLayout
-        android:id="@+id/cell_yesterday"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
-        android:background="?android:attr/selectableItemBackground">
+        android:layout_height="35dp"
+        android:orientation="horizontal"
+        android:background="#181825"
+        android:gravity="center">
+
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="YESTERDAY"
+            android:id="@+id/btn_prev"
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:text="◀"
             android:textColor="#89b4fa"
-            android:textSize="10sp"
-            android:textStyle="bold" />
-        <TextView
-            android:id="@+id/text_yesterday"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="..."
-            android:textColor="#cdd6f4"
+            android:gravity="center"
             android:textSize="14sp"
-            android:ellipsize="end"
-            android:maxLines="3" /> </LinearLayout>
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btn_today"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="📅"
+            android:gravity="center"
+            android:textSize="14sp"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btn_next"
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:text="▶"
+            android:textColor="#89b4fa"
+            android:gravity="center"
+            android:textSize="14sp"
+            android:background="?android:attr/selectableItemBackground" />
+    </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/cell_today"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
-        android:background="#252538">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="TODAY"
-            android:textColor="#a6e3a1"
-            android:textSize="10sp"
-            android:textStyle="bold" />
-        <TextView
-            android:id="@+id/text_today"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="..."
-            android:textColor="#cdd6f4"
-            android:textSize="14sp"
-            android:ellipsize="end"
-            android:maxLines="3" /> </LinearLayout>
+        android:weightSum="3">
 
-    <LinearLayout
-        android:id="@+id/cell_tomorrow"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
-        android:background="?android:attr/selectableItemBackground">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="TOMORROW"
-            android:textColor="#f9e2af"
-            android:textSize="10sp"
-            android:textStyle="bold" />
-        <TextView
-            android:id="@+id/text_tomorrow"
+        <LinearLayout
+            android:id="@+id/cell_yesterday"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="..."
-            android:textColor="#cdd6f4"
-            android:textSize="14sp"
-            android:ellipsize="end"
-            android:maxLines="3" /> </LinearLayout>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="?android:attr/selectableItemBackground">
+            <TextView
+                android:id="@+id/label_yesterday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="#89b4fa"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/text_yesterday"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="..."
+                android:textColor="#cdd6f4"
+                android:textSize="14sp"
+                android:ellipsize="end"
+                android:maxLines="3" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cell_today"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="#252538">
+            <TextView
+                android:id="@+id/label_today"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="#a6e3a1"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/text_today"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="..."
+                android:textColor="#cdd6f4"
+                android:textSize="14sp"
+                android:ellipsize="end"
+                android:maxLines="3" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cell_tomorrow"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="?android:attr/selectableItemBackground">
+            <TextView
+                android:id="@+id/label_tomorrow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="#f9e2af"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/text_tomorrow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="..."
+                android:textColor="#cdd6f4"
+                android:textSize="14sp"
+                android:ellipsize="end"
+                android:maxLines="3" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>
