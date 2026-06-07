@@ -36,9 +36,12 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    // Locate and replace the handleIntent method inside MainActivity.java
     private void handleIntent(Intent intent) {
         if (intent != null && intent.hasExtra("target_day")) {
             pendingDay = intent.getStringExtra("target_day");
+        } else {
+            pendingDay = ""; // Launcher icon tap explicitly clears out target focus tokens
         }
     }
 
