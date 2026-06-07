@@ -1,0 +1,29 @@
+# Node dependencies
+node_modules/
+package-lock.json
+
+# Local environment & paths
+local.properties
+.env
+.DS_Store
+
+# Android Build Outputs & IDE Caches
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+.idea/
+*.apk
+*.aar
+
+# --- CUT THE BOILERPLATE NOISE ---
+# Drop Windows executable scripts (you're on Linux Mint)
+android/gradlew.bat
+
+# Drop default boilerplate testing suites
+android/app/src/test/
+android/app/src/androidTest/
+
+# Drop default stock splash screens and launcher icons
+android/app/src/main/res/drawable*/splash.png
+android/app/src/main/res/mipmap*/
