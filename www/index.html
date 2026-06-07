@@ -32,7 +32,7 @@
             font-size: 11px;
             color: #7f8c8d;
             font-family: monospace;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.1px;
             border-top: 1px dashed #e2e8f0;
         }
     </style>
@@ -109,6 +109,9 @@
                                 <div>• ENTER_KEY &nbsp;→ SAVE_AND_EXIT</div>
                                 <div style="margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 8px;">• ,, OR .. &nbsp;→ INLINE_DIVIDER ( # )</div>
                                 <div>• FFF &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ CARRY_FORWARD_YEST</div>
+                                <div>• BBB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ BUMP_TO_TOMORROW</div>
+                                <div>• DDD &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ MARK_COMPLETED ( ✓ )</div>
+                                <div>• TTT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ TIMESTAMP ([HH:MM])</div>
                                 <div>• XXX &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ WIP_HISTORY (BLANK)</div>
                                 <div>• NNN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ UNDO_LAST_WIPE</div>
                                 <div>• VVV &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ ABORT_SESSION (ESC)</div>
@@ -144,9 +147,10 @@
                 container.insertAdjacentHTML('beforeend', rowHTML);
             }
 
+            // Expanded one-line dynamic telemetry bar
             const macroFooterHTML = `
                 <div class="telegraph-footer">
-                    ,,/.. = # &nbsp;|&nbsp; fff = forward &nbsp;|&nbsp; xxx = clear &nbsp;|&nbsp; nnn = undo &nbsp;|&nbsp; vvv = esc
+                    ,,/..=# | fff=fwd | bbb=bump | ddd=✓ | ttt=time | xxx=clr | nnn=undo | vvv=esc
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', macroFooterHTML);
@@ -166,6 +170,46 @@
                     const textBeforeCursor = val.slice(0, cursorPosition);
                     const lowerTextBefore = textBeforeCursor.toLowerCase();
 
+                    // --- TRIPLE-V ESCAPE ACTION ---
+                    if (lowerTextBefore.endsWith('vvv')) {
+                        const originalValue = initialValues[k] || '';
+                        target.value = originalValue;
+                        if (window.AndroidWidgetBridge) {
+                            window.AndroidWidgetBridge.saveDayText(k, originalValue);
+                            window.AndroidWidgetBridge.goHome();
+                        }
+                        return; 
+                    }
+
+                    // --- TRIPLE-X WIPE SYSTEM ---
+                    if (lowerTextBefore.endsWith('xxx')) {
+                        const preservedContent = val.slice(0, cursorPosition - 3) + val.slice(cursorPosition);
+                        if (preservedContent.trim().length > 0) {
+                            lastCleared[k] = preservedContent;
+                        }
+                        target.value = '';
+                        if (window.AndroidWidgetBridge) {
+                            window.AndroidWidgetBridge.saveDayText(k, '');
+                        }
+                        return; 
+                    }
+
+                    // --- TRIPLE-N UNDO SYSTEM ---
+                    if (lowerTextBefore.endsWith('nnn')) {
+                        if (lastCleared[k]) {
+                            const restoredContent = val.slice(0, cursorPosition - 3) + lastCleared[k] + val.slice(cursorPosition);
+                            target.value = restoredContent;
+                            const newCursorPos = cursorPosition - 3 + lastCleared[k].length;
+                            target.setSelectionRange(newCursorPos, newCursorPos);
+                            lastCleared[k] = '';
+                            if (window.AndroidWidgetBridge) {
+                                window.AndroidWidgetBridge.saveDayText(k, target.value);
+                            }
+                            return;
+                        }
+                    }
+
+                    // --- TRIPLE-F CARRY FORWARD SYSTEM ---
                     if (lowerTextBefore.endsWith('fff')) {
                         const currentParts = k.split('-');
                         const currentDateObj = new Date(currentParts[0], currentParts[1] - 1, currentParts[2]);
@@ -194,42 +238,70 @@
                         return;
                     }
 
-                    if (lowerTextBefore.endsWith('vvv')) {
-                        const originalValue = initialValues[k] || '';
-                        target.value = originalValue;
-                        if (window.AndroidWidgetBridge) {
-                            window.AndroidWidgetBridge.saveDayText(k, originalValue);
-                            window.AndroidWidgetBridge.goHome();
-                        }
-                        return; 
-                    }
+                    // --- TRIPLE-B BUMP TO TOMORROW SYSTEM ---
+                    if (lowerTextBefore.endsWith('bbb')) {
+                        const currentParts = k.split('-');
+                        const currentDateObj = new Date(currentParts[0], currentParts[1] - 1, currentParts[2]);
+                        currentDateObj.setDate(currentDateObj.getDate() + 1);
+                        const tomorrowKey = getDateString(currentDateObj);
 
-                    if (lowerTextBefore.endsWith('xxx')) {
-                        const preservedContent = val.slice(0, cursorPosition - 3) + val.slice(cursorPosition);
-                        if (preservedContent.trim().length > 0) {
-                            lastCleared[k] = preservedContent;
-                        }
-                        target.value = '';
-                        if (window.AndroidWidgetBridge) {
-                            window.AndroidWidgetBridge.saveDayText(k, '');
-                        }
-                        return; 
-                    }
+                        const bumpedText = val.slice(0, cursorPosition - 3).trim();
+                        target.value = val.slice(cursorPosition); // Cut segment out of current field
 
-                    if (lowerTextBefore.endsWith('nnn')) {
-                        if (lastCleared[k]) {
-                            const restoredContent = val.slice(0, cursorPosition - 3) + lastCleared[k] + val.slice(cursorPosition);
-                            target.value = restoredContent;
-                            const newCursorPos = cursorPosition - 3 + lastCleared[k].length;
-                            target.setSelectionRange(newCursorPos, newCursorPos);
-                            lastCleared[k] = '';
-                            if (window.AndroidWidgetBridge) {
-                                window.AndroidWidgetBridge.saveDayText(k, target.value);
+                        if (bumpedText.length > 0) {
+                            let tomorrowText = window.AndroidWidgetBridge ? window.AndroidWidgetBridge.getDayText(tomorrowKey) : '';
+                            tomorrowText = tomorrowText.trim();
+                            const separator = tomorrowText.length > 0 ? ' # ' : '';
+                            const newTomorrowVal = tomorrowText + separator + bumpedText;
+
+                            // Live sync DOM field if wide-view column is active on screen
+                            const tomorrowEl = document.getElementById(`input-${tomorrowKey}`);
+                            if (tomorrowEl) {
+                                tomorrowEl.value = newTomorrowVal;
                             }
-                            return;
+                            if (window.AndroidWidgetBridge) {
+                                window.AndroidWidgetBridge.saveDayText(tomorrowKey, newTomorrowVal);
+                            }
                         }
+
+                        if (window.AndroidWidgetBridge) {
+                            window.AndroidWidgetBridge.saveDayText(k, target.value);
+                        }
+                        return;
                     }
 
+                    // --- TRIPLE-D COMPLETED MARK MACRO ---
+                    if (lowerTextBefore.endsWith('ddd')) {
+                        const baseText = val.slice(0, cursorPosition - 3);
+                        const trailingText = val.slice(cursorPosition);
+                        target.value = baseText + ' ✓ ' + trailingText;
+                        const newCursorPos = baseText.length + 3;
+                        target.setSelectionRange(newCursorPos, newCursorPos);
+                        if (window.AndroidWidgetBridge) {
+                            window.AndroidWidgetBridge.saveDayText(k, target.value);
+                        }
+                        return;
+                    }
+
+                    // --- TRIPLE-T TELEGRAPHIC TIMESTAMP MACRO ---
+                    if (lowerTextBefore.endsWith('ttt')) {
+                        const now = new Date();
+                        const hh = String(now.getHours()).padStart(2, '0');
+                        const mm = String(now.getMinutes()).padStart(2, '0');
+                        const timeStr = `[${hh}:${mm}] `;
+                        
+                        const baseText = val.slice(0, cursorPosition - 3);
+                        const trailingText = val.slice(cursorPosition);
+                        target.value = baseText + timeStr + trailingText;
+                        const newCursorPos = baseText.length + timeStr.length;
+                        target.setSelectionRange(newCursorPos, newCursorPos);
+                        if (window.AndroidWidgetBridge) {
+                            window.AndroidWidgetBridge.saveDayText(k, target.value);
+                        }
+                        return;
+                    }
+
+                    // --- LAYOUT DIVIDER MACROS ---
                     let matchLength = 0;
                     if (lowerTextBefore.endsWith(',,') || lowerTextBefore.endsWith('..')) {
                         matchLength = 2;
@@ -260,20 +332,17 @@
                 });
             });
 
-            // --- THE UNBREAKABLE NATIVE-BACKED KEYBOARD TRIGGER ---
+            // --- NATIVE-BACKED KEYBOARD TRIGGER & PADDING ENGINE ---
             if (focusedKey) {
                 const targetInput = document.getElementById(`input-${focusedKey}`);
                 if (targetInput) {
                     setTimeout(() => { 
-                        // 1. Assert DOM layout focus coordinates
                         targetInput.focus(); 
                         
-                        // 2. Overrule WebView validation check rules by signaling the Linux IME layer directly
                         if (window.AndroidWidgetBridge && typeof window.AndroidWidgetBridge.forceSystemKeyboard === 'function') {
                             window.AndroidWidgetBridge.forceSystemKeyboard();
                         }
                         
-                        // 3. Apply ergonomic padding space logic
                         let currentVal = targetInput.value;
                         if (currentVal.length > 0 && !currentVal.endsWith(' ')) {
                             targetInput.value = currentVal + ' ';
@@ -282,7 +351,6 @@
                             }
                         }
                         
-                        // 4. Lock selection focus directly to the rear character boundary
                         const textEndIndex = targetInput.value.length;
                         targetInput.setSelectionRange(textEndIndex, textEndIndex);
                     }, 300); 
