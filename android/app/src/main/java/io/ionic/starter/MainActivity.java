@@ -70,23 +70,32 @@ public class MainActivity extends BridgeActivity {
         }
 
         @JavascriptInterface
-        public String getDayText(String day) {
-            SharedPreferences prefs = getSharedPreferences("ScratchPadPrefs", Context.MODE_PRIVATE);
-            return prefs.getString(day, "");
+        public void saveDayText(String dateKey, String textContent) {
+            Context context = getApplicationContext();
+
+            // 📢 TRACER 1: Verify the web layout is actually passing data over the bridge
+            //android.util.Log.d("SHORTHANDER", "➡️ WEB WRITE -> Key: " + dateKey + " | Value: " + textContent);
+            
+            // 1. Write your input stream securely to your hardware AES256 vault
+            EncryptedStorage.write(context, dateKey, textContent);
+            
+            // 2. Query the OS for every active instance of your widget pinned to the workspace
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+            int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, MyWidgetProvider.class));
+            
+            // 3. Build the update intent and attach the active IDs payload
+            Intent updateIntent = new Intent(context, MyWidgetProvider.class);
+            updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+            updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds);
+            
+            // 4. Fire the broadcast to force the onUpdate rendering loops to execute
+            context.sendBroadcast(updateIntent);
         }
 
         @JavascriptInterface
-        public void saveDayText(String day, String text) {
-            SharedPreferences prefs = getSharedPreferences("ScratchPadPrefs", Context.MODE_PRIVATE);
-            prefs.edit().putString(day, text).apply();
-
-            // Broadcast real-time refresh signal to the desktop widget engine
-            Context context = getApplicationContext();
-            Intent intent = new Intent(context, MyWidgetProvider.class);
-            intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-            int[] ids = AppWidgetManager.getInstance(context).getAppWidgetIds(new ComponentName(context, MyWidgetProvider.class));
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
-            context.sendBroadcast(intent);
+        public String getDayText(String dateKey) {
+            // Transparently decrypts the value on-the-fly straight to the web layout buffer
+            return EncryptedStorage.read(getApplicationContext(), dateKey);
         }
 
         @JavascriptInterface

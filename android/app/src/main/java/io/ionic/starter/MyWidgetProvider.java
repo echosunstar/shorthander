@@ -24,8 +24,12 @@ public class MyWidgetProvider extends AppWidgetProvider {
     private final int[] labelIds = {R.id.label_1, R.id.label_2, R.id.label_3, R.id.label_4, R.id.label_5, R.id.label_6};
     private final int[] textIds = {R.id.text_1, R.id.text_2, R.id.text_3, R.id.text_4, R.id.text_5, R.id.text_6};
 
-    @Override
+@Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+
+        // 📢 TRACER 2: Verify the widget caught the broadcast and is initiating a refresh loop
+        // android.util.Log.d("SHORTHANDER", "🔄 WIDGET REFRESH TRIGGERED. Active widgets found: " + appWidgetIds.length);
+        // Keep the legacy prefs object *only* for reading the non-sensitive UI navigation scroll state
         SharedPreferences prefs = context.getSharedPreferences("ScratchPadPrefs", Context.MODE_PRIVATE);
         int offset = prefs.getInt("widget_offset", 0);
 
@@ -46,21 +50,24 @@ public class MyWidgetProvider extends AppWidgetProvider {
             int layoutId = isWide ? R.layout.my_widget_layout_wide : R.layout.my_widget_layout;
             RemoteViews views = new RemoteViews(context.getPackageName(), layoutId);
 
-            // Populate active timeline slots dynamically
             for (int i = 0; i < visibleCellsCount; i++) {
                 Calendar cal = Calendar.getInstance();
-                // Slot index offset: narrow spans i-1 (-1, 0, 1), wide extends straight to 4 days ahead
                 cal.add(Calendar.DAY_OF_YEAR, offset + (i - 1));
 
                 String currentKey = keyFormat.format(cal.getTime());
                 String labelText = labelFormat.format(cal.getTime()).toLowerCase();
 
+                String secureCellData = EncryptedStorage.read(context, currentKey);
+
+                // 📢 TRACER 3: Verify what key the widget is looking for and what it actually decrypted
+                //if (currentKey.equals(realTodayKey)) {
+                //    android.util.Log.d("SHORTHANDER", "📖 WIDGET READ -> Key: " + currentKey + " | Decrypted Content: " + secureCellData);
+                //}
+
                 views.setTextViewText(labelIds[i], labelText);
-                views.setTextViewText(textIds[i], prefs.getString(currentKey, ""));
+                views.setTextViewText(textIds[i], secureCellData);
                 views.setOnClickPendingIntent(cellIds[i], createClickIntent(context, currentKey, 100 + i));
 
-                // --- ERGONOMIC HIGHLIGHTING ENGINE ---
-                // Paint actual today a distinct dark sapphire blue hue so it pops instantly
                 if (currentKey.equals(realTodayKey)) {
                     views.setInt(cellIds[i], "setBackgroundColor", Color.parseColor("#1f385c"));
                 } else {
@@ -73,7 +80,6 @@ public class MyWidgetProvider extends AppWidgetProvider {
                 }
             }
 
-            // Wire control bar hooks
             views.setOnClickPendingIntent(R.id.btn_prev, createNavIntent(context, ACTION_PREV, 201));
             views.setOnClickPendingIntent(R.id.btn_next, createNavIntent(context, ACTION_NEXT, 202));
             views.setOnClickPendingIntent(R.id.btn_today, createNavIntent(context, ACTION_RESET, 203));
@@ -88,7 +94,6 @@ public class MyWidgetProvider extends AppWidgetProvider {
         // Force an immediate evaluation check loop when a resizing constraint is fired
         onUpdate(context, appWidgetManager, new int[]{appWidgetId});
     }
-
 
     // Locate the onReceive method inside your MyWidgetProvider.java and update its condition blocks:
     @Override
