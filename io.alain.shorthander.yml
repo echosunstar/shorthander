@@ -1,0 +1,31 @@
+Categories:
+  - Security
+  - Utility
+License: MIT
+WebSite: https://github.com/echosunstar/shorthander
+SourceCode: https://github.com/echosunstar/shorthander
+IssueTracker: https://github.com/echosunstar/shorthander/issues
+
+Summary: Privacy-first offline cryptographic scratchpad widget.
+Description: |-
+    Shorthander is engineered for absolute data isolation. Your notes 
+    belong strictly to you. Featuring zero network permissions and local 
+    device encryption, it utilizes cognitive shorthand macros to let you 
+    jot down fleeting thoughts directly from your home-screen widget.
+
+RepoType: git
+Repo: https://github.com/echosunstar/shorthander.git
+
+Builds:
+  - versionCode: 1
+    versionName: 1.0.10
+    commit: v1.0.10
+    subdir: android
+    gradle:
+      - release
+    prebuild:
+      - cd ..
+      - npm install
+      - npm run build
+      - npx cap sync android
+      - cd android
