@@ -1,4 +1,5 @@
-package io.ionic.starter;
+package io.alain.shorthander;
+import io.alain.shorthander.R;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
