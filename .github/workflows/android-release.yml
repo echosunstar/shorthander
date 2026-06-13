@@ -85,6 +85,11 @@ jobs:
           path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
           retention-days: 7
 
+      - name: Clean Up Package Filename for Presentation
+        run: |
+          mv ${{ steps.sign_apk.outputs.signedReleaseFile }} android/app/build/outputs/apk/release/Shorthander-${{ github.ref_name }}.apk
+          mv ${{ steps.sign_aab.outputs.signedReleaseFile }} android/app/build/outputs/bundle/release/Shorthander-${{ github.ref_name }}.aab
+
       # 6. Automatic release generator (Only runs when you push a version tag)
       - name: Create Automatic GitHub Release
         uses: softprops/action-gh-release@v2
@@ -96,7 +101,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ${{ steps.sign_apk.outputs.signedReleaseFile }}
-            ${{ steps.sign_aab.outputs.signedReleaseFile }}
+            android/app/build/outputs/apk/release/Shorthander-${{ github.ref_name }}.apk
+            android/app/build/outputs/bundle/release/Shorthander-${{ github.ref_name }}.aab
+        
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
