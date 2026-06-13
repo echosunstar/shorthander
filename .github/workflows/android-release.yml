@@ -34,14 +34,16 @@ jobs:
         run: |
           npx cap sync android
 
-      - name: Build Production Release Bundle (.aab)
+      # 1. Instruct Gradle to compile BOTH distribution formats simultaneously
+      - name: Build Production Release Bundle (.aab) & Package (.apk)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew bundleRelease
+          ./gradlew bundleRelease assembleRelease
 
-      - name: Sign Android App Bundle
-        id: sign_app
+      # 2. Your original, proven AAB signing step (Unchanged except for step ID)
+      - name: Sign Android App Bundle (.aab)
+        id: sign_aab
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: android/app/build/outputs/bundle/release
@@ -50,9 +52,45 @@ jobs:
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
+      # 3. New isolated track to sign your direct-download APK file
+      - name: Sign Android App Package (.apk)
+        id: sign_apk
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      # 4. Upload your signed Google Play Asset
       - name: Upload Signed App Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: shorthander-release-${{ github.ref_name }}
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          name: shorthander-bundle-${{ github.ref_name }}
+          path: ${{ steps.sign_aab.outputs.signedReleaseFile }}
           retention-days: 7
+
+      # 5. Upload your signed direct-download installer asset
+      - name: Upload Signed APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shorthander-apk-${{ github.ref_name }}
+          path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
+          retention-days: 7
+
+      # 6. Automatic release generator (Only runs when you push a version tag)
+      - name: Create Automatic GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Shorthander ${{ github.ref_name }}
+          body: "Automated production release built via GitHub Actions CI for proven cryptographic provenance."
+          draft: false
+          prerelease: false
+          files: |
+            ${{ steps.sign_apk.outputs.signedReleaseFile }}
+            ${{ steps.sign_aab.outputs.signedReleaseFile }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
