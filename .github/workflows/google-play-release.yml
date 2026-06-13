@@ -1,0 +1,62 @@
+name: Build and Sign Google Play Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers automatically when you push a tag like v1.0.11
+
+jobs:
+  build-and-sign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Compile Frontend Web Assets
+        run: npm run build
+
+      - name: Set up Java Development Kit (JDK)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Sync Web Assets to Native Android Project
+        run: npx cap sync android
+
+      - name: Grant Execute Permissions to Gradle
+        run: chmod +x android/gradlew
+
+      - name: Compile Production Android App Bundle (AAB)
+        run: |
+          cd android
+          ./gradlew bundleRelease
+
+      - name: Sign Production App Bundle using Existing Vault
+        id: sign_app
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          singleSign: true
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Upload Signed Production Bundle to GitHub Artifacts
+        uses: actions/artifacts@v4
+        with:
+          name: shorthander-release-signed
+          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          retention-days: 7
