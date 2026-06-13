@@ -10,15 +10,15 @@ Built using Capacitor and Ionic, featuring native Android desktop widgets for im
 
 Shorthander does not seek to replace **Notion, Obsidian, Google Calendar**, or your favorite heavy-duty second-brain app. 
 
-Those platforms are built for structured knowledge management, complex database linking, and long-form planning. They excel at organization, but they introduce a massive bottleneck: **mental friction**. 
+Those platforms are built for structured knowledge management, complex database linking, and long-form planning. They excel at organization, but they introduce a bottleneck: **mental friction**. 
 
 When you need to jot down a fleeting thought *right now*, opening a cloud-synced app, navigating a folder tree, creating a new page, and adding a title kills the moment. 
 
-Shorthander is the digital equivalent of a crumpled piece of scrap paper. It is built for **Cognitive Shorthand** (see below) : minimalistic mental triggers that mean absolutely nothing to the rest of the world, but mean everything to your own brain in that exact moment.
+Shorthander is the digital equivalent of a crumpled piece of scrap paper. It is built for **Cognitive Shorthand** (see below) : minimalistic mental triggers that mean nothing to the rest of the world, but mean everything to your own brain in that exact moment.
 
 **"Cognitive Shorthand"**
 
-A stranger looking at your desktop widget should see absolute gibberish. But your brain doesn't need full sentences; it just needs a spark.
+A stranger looking at your Android widget may see  see  gibberish but your brain doesn't need full sentences; it just needs a spark.
 
 * **The Notion/Obsidian Way:** > *"Remember to check the tire pressure before the weekend road trip and make sure it's inflated to exactly 36 PSI."* (Requires formatting, categorization, and a checkbox).
 * **The Shorthander Way:** > **`36 rt`**
@@ -59,7 +59,7 @@ Instead of forcing you to open the symbol keyboard to find a hash (`#`) or pipe 
 
 By keeping your thumbs locked onto the default keyboard layer, you can stack contextual triggers sequentially without friction.
 
-## ✨ Features
+## Features
 
 * **Abbreviations:** keyword macros  automatically expand into longer structural templates or text blocks when typed, eliminating repetitive keystrokes entirely.
 * **Instant Home-Screen Widgets:** native Android desktop widget designed for rapid-fire data entry and instant visibility without needing to open a full application interface.
@@ -67,7 +67,7 @@ By keeping your thumbs locked onto the default keyboard layer, you can stack con
 * **Encrypted Storage:** All scratchpad data is fully encrypted at rest on your device, ensuring total security if your phone is lost or stolen.
 * **Lightweight Footprint:** no frameworks, no background battery drain, dark-mode optimization .
 
-# 🛡️ Privacy & Security Blueprint
+# Privacy & Security Blueprint
 
 Shorthander is engineered for data isolation. Your notes belong to you, and only you.
 
