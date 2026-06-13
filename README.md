@@ -1,4 +1,4 @@
-# Shorthander - there is only one
+# Shorthander - there is only one!
 
 A privacy-first, widget-only 100% offline cryptographic scratchpad for Android. 
 
@@ -59,7 +59,15 @@ Instead of forcing you to open the symbol keyboard to find a hash (`#`) or pipe 
 
 By keeping your thumbs locked onto the default keyboard layer, you can stack contextual triggers sequentially without friction.
 
-## Features
+# Screenshots
+
+![Shorthander Home Screen Widget](assets/shorthander-thereisonlyone-1.png)
+
+![Shorthander Home Screen Widget - Wider](assets/shorthander-thereisonlyone-2.png)
+
+![Shorthander  - data entry](assets/shorthander-thereisonlyone-3.png)
+
+# Features
 
 * **Abbreviations:** keyword macros  automatically expand into longer structural templates or text blocks when typed, eliminating repetitive keystrokes entirely.
 * **Instant Home-Screen Widgets:** native Android desktop widget designed for rapid-fire data entry and instant visibility without needing to open a full application interface.
